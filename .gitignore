@@ -1,4 +1,6 @@
 .env
 data/epc_data.csv
 data/version.json
+data/summary_output.json
+data/summary_output.xlsx
 node_modules/

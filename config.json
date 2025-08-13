@@ -1,0 +1,8 @@
+{
+    "attributes":[
+        "current-energy-rating",
+        "potential-energy-rating",
+        "main-fuel",
+        "construction-age-band"
+    ]
+}

@@ -1,6 +1,7 @@
 # EPCloader
 
 Scripts to maintain a copy of the latest EPC data for a district from [https://epc.opendatacommunities.org/docs/api/domestic](https://epc.opendatacommunities.org/docs/api/domestic) in csv format.
+A configurable script then summarises this as an xlsx or json output which uses the uprn attribute to look up an area code, such as parish or ward.
 
 ## Access to the EPC data
 You require a registered account to use this API, and all requests to this API must be authenticated to your account using HTTP Basic Auth. When you requister you will be assigned a Base64-encoded token and an apikey. You should create a hidden file .env in the root of the of EPCloader and put the token in it thus:
@@ -19,3 +20,16 @@ This is run using
 ```
 ./update.sh
 ```
+This checks that the data is up to date and then summarises it.
+## Guidance about the data available
+Here is the published guidance, which includes available data fields. [https://epc.opendatacommunities.org/docs/guidance](https://epc.opendatacommunities.org/docs/guidance)
+
+## Summarising the data
+The summarise script follows on from downloading the latest csv in update.sh
+It is configured by config.json, which enables you to specify which attributes are included in the summary.
+
+## Outstanding issues
++ The path of json and xlsx outputs needs to be specifyable.
++ Handle cleaning attributes before summarising - so that stray values are classified as other, and others are grouped.
++ Handle attribute ranges
++ Display as themed maps - how to select area type, attribute and ranges.
