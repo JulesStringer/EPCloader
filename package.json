@@ -1,0 +1,16 @@
+{
+  "name": "epcloader",
+  "version": "1.0.0",
+  "description": "Scripts to download the latest EPC data for a district from [https://epc.opendatacommunities.org/docs/api/domestic](https://epc.opendatacommunities.org/docs/api/domestic) in csv format.",
+  "main": "update.sh",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Julian Stringer",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.2.1"
+  }
+}

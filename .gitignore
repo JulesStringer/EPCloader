@@ -1,0 +1,4 @@
+.env
+data/epc_data.csv
+data/version.json
+node_modules/
