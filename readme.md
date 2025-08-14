@@ -31,6 +31,7 @@ It is configured by config.json, which enables you to specify which attributes a
 
 ### Configuring summaries
 The configuration has the following sections:
+```
 {
     attributes: [
 *... list of attribute names to be tabulated ...*
