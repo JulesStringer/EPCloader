@@ -1,6 +1,7 @@
 # EPCloader
 
-Scripts to maintain a copy of the latest EPC data for a district from [https://epc.opendatacommunities.org](https://epc.opendatacommunities.org) using their published API [https://epc.opendatacommunities.org/docs/api/domestic](https://epc.opendatacommunities.org/docs/api/domestic) in csv format.
+Scripts to maintain a copy of the latest EPC data for a district  in csv format from [https://epc.opendatacommunities.org](https://epc.opendatacommunities.org). This uses their published API [https://epc.opendatacommunities.org/docs/api/domestic](https://epc.opendatacommunities.org/docs/api/domestic).
+
 A configurable script then summarises this as an xlsx or json output which uses the uprn attribute to look up an area code, such as parish or ward.
 
 ## Access to the EPC data

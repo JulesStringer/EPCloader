@@ -18,7 +18,7 @@ const ExcelJS = require('exceljs');
 let datadir = path.join(__dirname, '../data');
 let uprn_lookup_file = '/mnt/www/stringerhj.co.uk/mapdata/uprn/uprn_lookup.json';
 let code_name = 'PARISH_CODE';
-const configPath = path.join(__dirname, '../config.json');
+let configPath = path.join(__dirname, '../config.json');
 // Eliminate second and subsequent duplicate certificates
 let uprn_lookup = {};
 // These objects will be used to store data for our summary.
@@ -249,6 +249,15 @@ for(const arg of args){
     }
     if ( arg.startsWith('code_name=')) {
         code_name = arg.split('=')[1];
+    }
+    if ( arg.startsWith('config=')) {
+        configPath = arg.split('=')[1];
+    }
+    if ( arg.startsWith('json_output=')) {
+        jsonFilePath = arg.split('=')[1];
+    }
+    if ( arg.startsWith('xlsx_output=')) {
+        xlsxFilePath = arg.split('=')[1];
     }
 }
 run().then(() => {
