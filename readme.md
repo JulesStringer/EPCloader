@@ -9,7 +9,7 @@ You require a registered account to use this API, and all requests to this API m
 ```
 EPC_DATA_TOKEN= your base64 combined token from the welcome page.
 ```
-## Configuration
+## Configuring the download
 The configuration is the local authority code and directory to maintain data in.
 This is done by parameters on the command line for running the script fetch_data.js
 These are:
