@@ -29,8 +29,35 @@ Here is the published guidance, which includes available data fields. [https://e
 The summarise script follows on from downloading the latest csv in update.sh
 It is configured by config.json, which enables you to specify which attributes are included in the summary.
 
+### Configuring summaries
+The configuration has the following sections:
+{
+    attributes: [
+*... list of attribute names to be tabulated ...*
+    ],
+    attribute_handling:{
+        *<attribute_name>*{
+            "mapping":{
+                *<original_name>*:*<tabulated_name>*,
+                ...
+            }
+        }
+    }
+}
+#### attribute_handling
+Specifies processing that it applied to an attribute before / when it is tabulated.
+Attribute values encountered in the data can be mapped to replacement values, this enables specific values entered over time to
+be grouped together, say for example we want to group all types of mains gas together.
+``` 
+    "attribute_handling":{
+        "main-fuel":{
+            "mapping":{
+                "mains gas (not community)": "mains gas",
+                "mains gas (community)": "mains gas",
+                "mains gas - this is for backwards compatibility only and should not be used": "mains gas",
+                "Gas: mains gas": "mains gas",
+```
 ## Outstanding issues
-+ The path of json and xlsx outputs needs to be specifyable.
-+ Handle cleaning attributes before summarising - so that stray values are classified as other, and others are grouped.
 + Handle attribute ranges
 + Display as themed maps - how to select area type, attribute and ranges.
++ sums and averages - on attributes like 

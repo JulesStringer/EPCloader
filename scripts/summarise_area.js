@@ -25,7 +25,7 @@ let uprn_lookup = {};
 let recordCount = 0;
 let no_uprn_count = 0;
 let uniqueAreaCodes = 0;
-const epcRatings = new Map(); // A Map to store counts for each EPC rating (
+let allMap;
 const uniqueBuilding = new Set();
 const areaData = new Map();
 
@@ -180,16 +180,29 @@ async function process_csv(filePath) {
                         }
                         const areaMap = areaData.get(areaCode);
                         areaMap.set('certificates', (areaMap.get('certificates') || 0) + 1);
+                        allMap.set('certificates', (allMap.get('certificates') || 0) + 1);
                         // Loop through the configured attributes and summarize them
                         for( const attribute of config.attributes) {
-                            const attributeValue = data[attribute];
+                            let attributeValue = data[attribute];
                             if (attributeValue) {
+                                if ( config.attribute_handling[attribute]){
+                                    let nv = config.attribute_handling[attribute].mapping[attributeValue];
+                                    if ( nv ){
+                                        attributeValue = nv;
+                                    }
+                                }
+                                // Use the rating as a key and increment its count
                                 if (!areaMap.has(attribute)) {
                                     areaMap.set(attribute, new Map());
                                 }
                                 const ratingMap = areaMap.get(attribute);
-                                // Use the rating as a key and increment its count
                                 ratingMap.set(attributeValue, (ratingMap.get(attributeValue) || 0) + 1);
+
+                                if ( !allMap.has(attribute)) {
+                                    allMap.set(attribute, new Map());
+                                }
+                                const all_ratingMap = allMap.get(attribute);
+                                all_ratingMap.set(attributeValue, (all_ratingMap.get(attributeValue) || 0) + 1);
                             }
                         }
                     }
@@ -197,11 +210,6 @@ async function process_csv(filePath) {
                     // If the UPRN does not exist in our lookup, we can log it or handle it as needed.
                     //console.warn(`UPRN ${uprn} not found in lookup.`);
                     no_uprn_count++;
-                }
-                const rating = data['current-energy-rating'];
-                if (rating) {
-                    // Use the rating as a key and increment its count, defaulting to 0 if not present.
-                    epcRatings.set(rating, (epcRatings.get(rating) || 0) + 1);
                 }
             }
         })
@@ -220,6 +228,11 @@ async function process_csv(filePath) {
 async function run(){
     await load_config();
     await load_uprn_lookup();
+    if (!areaData.has['all']){
+        areaData.set('all', new Map());
+    }
+    allMap = areaData.get('all');
+
     let filePath = path.join(datadir, 'epc_data.csv');
     if (fs.existsSync(filePath)) {
         console.log(`Processing file: ${filePath}`);
