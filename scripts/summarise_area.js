@@ -112,10 +112,12 @@ async function generateXlsxOutput(data, attributes) {
                 }
             }
         }
-        const sortedValues = Array.from(uniqueValues).sort();
-        
+        const areaMap = data.get('all');
+        const attributeMap = areaMap.get(attribute);
+        //const orderedValues = Array.from(uniqueValues);
+        const orderedValues = orderheadings(Array.from(uniqueValues), attribute, config, attributeMap);
         // Create header row
-        const header = ['Area Code', ...sortedValues];
+        const header = ['Area Code', ...orderedValues];
         worksheet.addRow(header);
 
         // Populate data rows
@@ -126,7 +128,7 @@ async function generateXlsxOutput(data, attributes) {
                 let count = parseInt(attributeMap);
                 rowData.push(count || 0);
             } else {
-                for (const value of sortedValues) {
+                for (const value of orderedValues) {
                     rowData.push(attributeMap ? (attributeMap.get(value) || 0) : 0);
                 }
             }
@@ -143,7 +145,25 @@ async function generateXlsxOutput(data, attributes) {
 }
 
 // records are in descending data order so once a UPRN is found it is not looked up again
-
+function applyattribute_to_map(ratingMap,attributeValue, stats){
+    if ( stats ){
+        ratingMap.set('n', (ratingMap.get('n') || 0) + 1);
+        let x = parseFloat(attributeValue);
+        let x2 = x * x;
+        ratingMap.set('x', (ratingMap.get('x') || 0) + x);
+        ratingMap.set('x2', (ratingMap.get('x2') || 0) + x2);
+        let min = ratingMap.get('min') || null;
+        if ( min == null || min > x) {
+            ratingMap.set('min',x);
+        }
+        let max = ratingMap.get('max') || null;
+        if  (max == null ||  max < x) {
+            ratingMap.set('max',x);
+        }
+    } else {
+        ratingMap.set(attributeValue, (ratingMap.get(attributeValue) || 0) + 1);
+    }
+}
 async function process_csv(filePath) {
     return new Promise((resolve, reject) => {
         // Create a readable stream from the file path. This is key to
@@ -185,24 +205,31 @@ async function process_csv(filePath) {
                         for( const attribute of config.attributes) {
                             let attributeValue = data[attribute];
                             if (attributeValue) {
+                                let stats = null;
+                                //console.log('Attribute: ' + attribute);
                                 if ( config.attribute_handling[attribute]){
-                                    let nv = config.attribute_handling[attribute].mapping[attributeValue];
-                                    if ( nv ){
-                                        attributeValue = nv;
+                                    let handling = config.attribute_handling[attribute];
+                                    if ( handling ){
+                                        if ( handling.mapping ){
+                                            let nv = handling.mapping[attributeValue];
+                                            if ( nv ){
+                                                attributeValue = nv;
+                                            }
+                                        }
+                                        stats = handling.stats;
                                     }
                                 }
                                 // Use the rating as a key and increment its count
                                 if (!areaMap.has(attribute)) {
                                     areaMap.set(attribute, new Map());
                                 }
-                                const ratingMap = areaMap.get(attribute);
-                                ratingMap.set(attributeValue, (ratingMap.get(attributeValue) || 0) + 1);
-
                                 if ( !allMap.has(attribute)) {
                                     allMap.set(attribute, new Map());
                                 }
+                                const ratingMap = areaMap.get(attribute);
+                                applyattribute_to_map(ratingMap,attributeValue, stats);
                                 const all_ratingMap = allMap.get(attribute);
-                                all_ratingMap.set(attributeValue, (all_ratingMap.get(attributeValue) || 0) + 1);
+                                applyattribute_to_map(all_ratingMap,attributeValue, stats);
                             }
                         }
                     }
@@ -225,6 +252,137 @@ async function process_csv(filePath) {
         //resolve();
     });
 }
+function orderheadings(keys, attribute, config, attributeMap){
+    let attribute_handling = config.attributes.includes(attribute) &&
+                             config.attribute_handling[attribute];
+    switch(attribute_handling.order){
+        case 'ascending':
+            keys = keys.sort(function(a,b){
+                return a > b ? 1 : -1;
+            });
+            break;
+        case 'descending':
+            keys = keys.sort(function(a,b){
+                return b > a ? 1 : -1;
+            });
+            break;
+        case 'value':
+            let values = [];
+            for(let key of keys){
+                let value = {
+                    k : key,
+                    v : attributeMap.get(key)
+                }
+                values.push(value);
+            }
+            values.sort( function(a, b){
+                return b.v - a.v;
+            });
+            keys = [];
+            for ( let v of values){
+                keys.push(v.k);
+            }
+            break;
+        case 'specific':
+//    console.log('attribute_handling: ' + JSON.stringify(attribute_handling));
+            keys =  attribute_handling.specific;
+    console.log(attribute + ' keys ' + JSON.stringify(keys));
+            break;
+        default:
+            break;
+    }
+    return keys;
+}
+/**
+ * A utility script to perform post-processing on the aggregated area data.
+ * This function calculates final statistics for continuous variables and
+ * returns a new Map with the calculated data.
+ * @param {Map} areaData The Map containing all the aggregated data, where keys are area codes.
+ * @param {object} config The configuration object used during processing.
+ * @returns {Map} A new Map with the final calculated statistics.
+ */
+function calculateStats(areaData, config) {
+    // Create a new Map to hold the final results, maintaining the original structure.
+    const finalResultsMap = new Map();
+
+    // Iterate through all area codes and their data maps.
+    for (const [areaCode, areaMap] of areaData.entries()) {
+        const areaOutputMap = new Map();
+        
+        // Iterate through all attributes for the current area.
+        for (const [attribute, attributeMap] of areaMap.entries()) {
+            // Check if the attribute is configured for continuous stats.
+            const statsConfig = config.attributes.includes(attribute) && 
+                              config.attribute_handling[attribute] && 
+                              config.attribute_handling[attribute].stats;
+            if (statsConfig) {
+                // If it's a continuous variable, calculate the final stats.
+                const n = attributeMap.get('n') || 0;
+                const x = attributeMap.get('x') || 0;
+                const x2 = attributeMap.get('x2') || 0;
+                const min = attributeMap.get('min');
+                const max = attributeMap.get('max');
+
+                let mean = 0;
+                let variance = 0;
+                let sd = 0;
+                
+                if (n > 0) {
+                    mean = x / n;
+                    // This is a sample so we want the sample variance
+                    variance = (x2 - n * (mean * mean))/(n-1);
+                    sd = Math.sqrt(variance);
+                }
+
+                // Store the calculated stats in a new Map.
+                const statsMap = new Map();
+                for(const att of statsConfig){
+                    switch(att){
+                        case 'count':
+                            statsMap.set('count', n);
+                            break;
+                        case 'mean':
+                            statsMap.set('mean', mean);
+                            break;
+                        case 'variance':
+                            statsMap.set('variance', variance);
+                            break;
+                        case 'standard-deviation':
+                            statsMap.set('standard-deviation', sd);
+                            break;
+                        case 'min':
+                            statsMap.set('min', min);
+                            break;
+                        case 'max':
+                            statsMap.set('max', max);
+                            break;
+                    }
+                }
+                areaOutputMap.set(attribute, statsMap);
+            } else {
+                // If it's a discrete variable, copy the counts directly.
+                // Since the original attributeMap is already a Map, we can clone it.
+                if ( attribute === 'certificates'){
+                    areaOutputMap.set(attribute, attributeMap);
+                } else {
+                    let keys = Array.from(attributeMap.keys());
+                    keys = orderheadings(keys, attribute, config, attributeMap);
+                    let attMap = new Map();
+                    //console.log(attribute, ' Key order: ' + JSON.stringify(keys));
+                    for ( const key of keys){
+                        attMap.set(key, attributeMap.get(key));
+                    }
+                    areaOutputMap.set(attribute, attMap);
+                }
+            }
+        }
+        // Add the processed area data Map to the final results Map.
+        finalResultsMap.set(areaCode, areaOutputMap);
+    }
+    
+    // Return the new Map object.
+    return finalResultsMap;
+}
 async function run(){
     await load_config();
     await load_uprn_lookup();
@@ -237,6 +395,7 @@ async function run(){
     if (fs.existsSync(filePath)) {
         console.log(`Processing file: ${filePath}`);
         let areaData = await process_csv(filePath);
+        let newAreaData = calculateStats(areaData, config);
         console.log('-----------------------------------');
         console.log('CSV file processing complete!');
         console.log('-----------------------------------');
@@ -244,9 +403,9 @@ async function run(){
         console.log(`Total unique Buildings EPCs: ${uniqueBuilding.size}`);
         console.log(`Total records with no UPRN: ${no_uprn_count}`);
         // Generate and write the output files
-        await generateJsonOutput(areaData);
+        await generateJsonOutput(newAreaData);
         const allAttributesToSummarize = [...config.attributes /*, ...config.recommendations, ...config.features*/];
-        await generateXlsxOutput(areaData, allAttributesToSummarize);
+        await generateXlsxOutput(newAreaData, allAttributesToSummarize);
     } else {
         console.error(`File not found: ${filePath}`);
     }

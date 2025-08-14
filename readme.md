@@ -41,7 +41,14 @@ The configuration has the following sections:
             "mapping":{
                 *<original_name>*:*<tabulated_name>*,
                 ...
-            }
+            },
+            "order":*<option from ascending, descending, value, specific>*
+            "specific":*[only applies to specific order, in which case it is an array of column headers in the orde they should appear]*
+        }
+        * or for continous variables *
+        *<attribute_name>*{
+            "stats":["count","mean","variance","standard-deviation","min","max"]
+            * attributes are the above statistics options *
         }
     }
 }
@@ -59,6 +66,5 @@ be grouped together, say for example we want to group all types of mains gas tog
                 "Gas: mains gas": "mains gas",
 ```
 ## Outstanding issues
-+ Handle attribute ranges
++ Handle attribute ranges on continuous variables
 + Display as themed maps - how to select area type, attribute and ranges.
-+ sums and averages - on attributes like 
