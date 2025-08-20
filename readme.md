@@ -68,3 +68,4 @@ be grouped together, say for example we want to group all types of mains gas tog
 ## Outstanding issues
 + Handle attribute ranges on continuous variables
 + Display as themed maps - how to select area type, attribute and ranges.
++ Add maplayer generation for parish, ward and ONS census areas as data becomes available.
