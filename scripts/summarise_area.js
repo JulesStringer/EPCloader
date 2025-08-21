@@ -287,9 +287,7 @@ function orderheadings(keys, attribute, config, attributeMap){
             }
             break;
         case 'specific':
-//    console.log('attribute_handling: ' + JSON.stringify(attribute_handling));
             keys =  attribute_handling.specific;
-    console.log(attribute + ' keys ' + JSON.stringify(keys));
             break;
         default:
             break;
@@ -371,7 +369,6 @@ function calculateStats(areaData, config) {
                     let keys = Array.from(attributeMap.keys());
                     keys = orderheadings(keys, attribute, config, attributeMap);
                     let attMap = new Map();
-                    //console.log(attribute, ' Key order: ' + JSON.stringify(keys));
                     for ( const key of keys){
                         attMap.set(key, attributeMap.get(key));
                     }
@@ -432,26 +429,21 @@ async function generatemap(config, map_output, layers_file, jsonFilePath, versio
         let layerdata = await fs.promises.readFile(layers_file);
         let layers = JSON.parse(layerdata);
         if ( config.maps && config.maps[map_output]){
-            console.log('Generating map layer ' + map_output);
             let map = config.maps[map_output];
             let geography_layer = layers[map.geography];
-            console.log('Source layer ' + map.geography);
-            console.log('Source path: ' + geography_layer.path);
             // get geography version and target version
             let geo_version = await getgeography_version(geography_layer.path);
             let out_dir = path.join(path.dirname(layers_file),'epc_data');
             let out_file = path.join(out_dir,map_output + '.json'); 
             let out_version = await getgeography_version(out_file);
-            console.log('out_version: ' + JSON.stringify(out_version));
             let changed = false;
             if ( out_version.geography !== geo_version.version ){
                 changed = true;
-                console.log('geography changed');
+                console.log('geography changed - out_version.geography: ' + out_version.geography + ' geo_version.version ' + geo_version.version);
             }
-            console.log('version: ' + JSON.stringify(version));
             if ( out_version.csv_updated !== version.csv_updated ){
                 changed = true;
-                console.log('csv changed');
+                console.log('csv changed out_version.csv_updated: ' + out_version.cs_updated + ' version.csv_updated: ' + version.csv_updated);
             }
             if ( out_version.config_version !== version.config_version ){
                 changed = true;
@@ -461,7 +453,9 @@ async function generatemap(config, map_output, layers_file, jsonFilePath, versio
                 console.log('Map unchanged');
             }
             if ( changed ){
-                console.log('Need to update map');
+                console.log('Source layer ' + map.geography);
+                console.log('Source path: ' + geography_layer.path);
+                console.log('Generating map layer ' + map_output);
                 // get geography_data
                 let geography_data = await(fs.promises.readFile(geography_layer.path));
                 let geography = JSON.parse(geography_data);
@@ -498,8 +492,6 @@ async function generatemap(config, map_output, layers_file, jsonFilePath, versio
                         console.log('Not EPC data for ' + key);
                     }
                 }
-                console.log('Completed EPC features');
-                
                 let layer = {
                     path: out_file,
                     location:"local"
@@ -536,7 +528,6 @@ async function generatemap(config, map_output, layers_file, jsonFilePath, versio
                     config_version:version.config_version,
                     geography: geo_version.version
                 };
-                console.log('result_version: ' + JSON.stringify(result_version));
                 await update_versions(out_file, result_version);
             }
         }
@@ -579,21 +570,19 @@ async function run(){
         // get summary version
         let versionfile = path.join(path.dirname(jsonFilePath),'version.json');
         let version = await getsummary_version(versionfile);
-        console.log('Summary version: ' + JSON.stringify(version));
-        console.log('Config version: ' + config.version);
-        console.log('csv_version: ' + JSON.stringify(csv_version));
         let changed = false;
         if ( version.csv_updated != csv_version.updatedDate  ){
-            console.log('csv versions differ ');
+            console.log('csv versions differ version.csv_updated: ' + version.csv_updated + ' csv_version.csv_updated: ' + csv_version.updatedDate);
             changed = true;
         }
         if ( version.config_version !== config.version ){
-            console.log('Config versions differ');
+            console.log('Config versions differ version.config_verion: ' + version.config_version + ' config.version: ' + config.version);
             changed = true;
         }
         if ( changed ) {
             console.log("csv data updated or config change - updating summaries");
             let areaData = await process_csv(filePath);
+            console.log('got areaData from process_csv');
             let newAreaData = calculateStats(areaData, config);
             console.log('-----------------------------------');
             console.log('CSV file processing complete!');
