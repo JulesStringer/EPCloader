@@ -17,6 +17,8 @@ const ExcelJS = require('exceljs');
 //
 let datadir = path.join(__dirname, '../data');
 let uprn_lookup_file = '/mnt/www/stringerhj.co.uk/mapdata/uprn/uprn_lookup.json';
+let layers_file = '/mnt/www/stringerhj.co.uk/mapdata/layers.json';
+let map_output = null;
 let code_name = 'PARISH_CODE';
 let configPath = path.join(__dirname, '../config.json');
 // Eliminate second and subsequent duplicate certificates
@@ -79,6 +81,7 @@ async function generateJsonOutput(data) {
     } catch (err) {
         console.error(`Error writing JSON file: ${err}`);
     }
+    return outputObject;
 }
 /**
  * Generates an XLSX file with each attribute on a separate sheet.
@@ -383,6 +386,183 @@ function calculateStats(areaData, config) {
     // Return the new Map object.
     return finalResultsMap;
 }
+async function getgeography_version(file_path){
+    // get directory path
+    let versions_file = path.join(path.dirname(file_path),'versions.json');
+    let versions_data = await fs.promises.readFile(versions_file).catch(err => {
+        if ( err.code == 'ENOENT'){
+            return '{}';
+        }else{
+            throw err;
+        }
+    });
+    let versions = JSON.parse(versions_data);
+    let file_name = path.basename(file_path);
+    let version = versions[file_name];
+    if ( !version ){
+        return '{}';
+    }
+    return version;
+}
+async function update_versions(out_file, result_version){
+    let versions_file = path.join(path.dirname(out_file),'versions.json');
+    let versions_data = await fs.promises.readFile(versions_file).catch(err => {
+        if ( err.code == 'ENOENT'){
+            return '{}';
+        }else{
+            throw err;
+        }
+    });
+    let versions = JSON.parse(versions_data);
+    let file_name = path.basename(out_file);
+    versions[file_name] = result_version;
+    await fs.promises.writeFile(versions_file,JSON.stringify(versions));
+}
+
+async function generatemap(config, map_output, layers_file, jsonFilePath, version){
+    if ( map_output ){
+        let json_data = await fs.promises.readFile(jsonFilePath).catch(err => {
+            if ( err.code == 'ENOENT'){
+                console.log(jsonFilePath + ' not found');
+                throw err;
+            }
+            throw err;
+        });
+        let jsonOutput = JSON.parse(json_data);
+        let layerdata = await fs.promises.readFile(layers_file);
+        let layers = JSON.parse(layerdata);
+        if ( config.maps && config.maps[map_output]){
+            console.log('Generating map layer ' + map_output);
+            let map = config.maps[map_output];
+            let geography_layer = layers[map.geography];
+            console.log('Source layer ' + map.geography);
+            console.log('Source path: ' + geography_layer.path);
+            // get geography version and target version
+            let geo_version = await getgeography_version(geography_layer.path);
+            let out_dir = path.join(path.dirname(layers_file),'epc_data');
+            let out_file = path.join(out_dir,map_output + '.json'); 
+            let out_version = await getgeography_version(out_file);
+            console.log('out_version: ' + JSON.stringify(out_version));
+            let changed = false;
+            if ( out_version.geography !== geo_version.version ){
+                changed = true;
+                console.log('geography changed');
+            }
+            console.log('version: ' + JSON.stringify(version));
+            if ( out_version.csv_updated !== version.csv_updated ){
+                changed = true;
+                console.log('csv changed');
+            }
+            if ( out_version.config_version !== version.config_version ){
+                changed = true;
+                console.log('Config changed');
+            }
+            if ( !changed ){
+                console.log('Map unchanged');
+            }
+            if ( changed ){
+                console.log('Need to update map');
+                // get geography_data
+                let geography_data = await(fs.promises.readFile(geography_layer.path));
+                let geography = JSON.parse(geography_data);
+                result = {
+                    type: "FeatureCollection",
+                    name: map_output,
+                    crs: {
+                        type: "name",
+                        properties: {
+                            name: "urn:ogc:def:crs:EPSG::27700"
+                        }
+                    },
+                    features: [
+                    ]
+                };
+                for(let feature of geography.features){
+                    let key = feature.properties[map.key];
+                    if ( jsonOutput[key]){
+                        let properties = {};
+                        for(let att of map.geography_attributes){
+                            properties[att] = feature.properties[att];
+                        }
+                        let epcdata = jsonOutput[key];
+                        for(let att in epcdata){
+                            properties[att] = epcdata[att];
+                        }
+                        let epc_feature = {
+                            type: "Feature",
+                            properties: properties,
+                            geometry: feature.geometry
+                        };
+                        result.features.push(epc_feature);
+                    } else {
+                        console.log('Not EPC data for ' + key);
+                    }
+                }
+                console.log('Completed EPC features');
+                
+                let layer = {
+                    path: out_file,
+                    location:"local"
+                }
+                if ( layers[map_output]){
+                    layer = layers[map_output];
+                    // if layer definition has been changed manually it could be different from the default
+                }
+                out_file = layer.path;
+                out_dir = path.dirname(out_file);
+                // check outdir exists
+                await fs.promises.access(out_dir).catch(async(err) => {
+                    if ( err.code == 'ENOENT'){
+                        console.log('Creating ' + out_dir);
+                        await fs.promises.mkdir(out_dir);
+                        return;
+                    } else {
+                        throw err;
+                    }
+                });
+                await fs.promises.writeFile(out_file, JSON.stringify(result));
+                if ( !layers[map_output]){
+                    console.log('Adding ' + map_output + ' to layers.json');
+                    layers[map_output] = layer;
+                    await fs.promises.writeFile(layers_file, JSON.stringify(layers));
+                }
+                // write versions file
+                let d = new Date();
+                let version_string = d.toISOString().split('T')[0];
+                let result_version = {
+                    version: version_string,
+                    loaded: d.toISOString(),
+                    csv_updated: version.csv_updated,
+                    config_version:version.config_version,
+                    geography: geo_version.version
+                };
+                console.log('result_version: ' + JSON.stringify(result_version));
+                await update_versions(out_file, result_version);
+            }
+        }
+    }
+}
+async function getcsv_version(datadir){
+    let versionfile = path.join(datadir, 'version.json');
+    let versiondata = await fs.promises.readFile(versionfile).catch(err => {
+        if ( err.code == 'ENOENT'){
+            return '{}';
+        } else {
+            throw err;
+        }
+    });
+    return JSON.parse(versiondata);
+}
+async function getsummary_version(versionfile){
+    let versiondata = await fs.promises.readFile(versionfile).catch(err => {
+        if ( err.code == 'ENOENT'){
+            return '{}';
+        } else {
+            throw err;
+        }
+    });
+    return JSON.parse(versiondata);
+}
 async function run(){
     await load_config();
     await load_uprn_lookup();
@@ -394,18 +574,46 @@ async function run(){
     let filePath = path.join(datadir, 'epc_data.csv');
     if (fs.existsSync(filePath)) {
         console.log(`Processing file: ${filePath}`);
-        let areaData = await process_csv(filePath);
-        let newAreaData = calculateStats(areaData, config);
-        console.log('-----------------------------------');
-        console.log('CSV file processing complete!');
-        console.log('-----------------------------------');
-        console.log(`Total records processed: ${recordCount}`);
-        console.log(`Total unique Buildings EPCs: ${uniqueBuilding.size}`);
-        console.log(`Total records with no UPRN: ${no_uprn_count}`);
-        // Generate and write the output files
-        await generateJsonOutput(newAreaData);
-        const allAttributesToSummarize = [...config.attributes /*, ...config.recommendations, ...config.features*/];
-        await generateXlsxOutput(newAreaData, allAttributesToSummarize);
+        // get source version
+        let csv_version = await getcsv_version(datadir);
+        // get summary version
+        let versionfile = path.join(path.dirname(jsonFilePath),'version.json');
+        let version = await getsummary_version(versionfile);
+        console.log('Summary version: ' + JSON.stringify(version));
+        console.log('Config version: ' + config.version);
+        console.log('csv_version: ' + JSON.stringify(csv_version));
+        let changed = false;
+        if ( version.csv_updated != csv_version.updatedDate  ){
+            console.log('csv versions differ ');
+            changed = true;
+        }
+        if ( version.config_version !== config.version ){
+            console.log('Config versions differ');
+            changed = true;
+        }
+        if ( changed ) {
+            console.log("csv data updated or config change - updating summaries");
+            let areaData = await process_csv(filePath);
+            let newAreaData = calculateStats(areaData, config);
+            console.log('-----------------------------------');
+            console.log('CSV file processing complete!');
+            console.log('-----------------------------------');
+            console.log(`Total records processed: ${recordCount}`);
+            console.log(`Total unique Buildings EPCs: ${uniqueBuilding.size}`);
+            console.log(`Total records with no UPRN: ${no_uprn_count}`);
+            // Generate and write the output files
+            let jsonOutput = await generateJsonOutput(newAreaData);
+            const allAttributesToSummarize = [...config.attributes /*, ...config.recommendations, ...config.features*/];
+            await generateXlsxOutput(newAreaData, allAttributesToSummarize);
+            // write summary version
+            version = {
+                csv_updated: csv_version.updatedDate,
+                config_version: config.version
+            };
+            await fs.promises.writeFile(versionfile, JSON.stringify(version));
+        }
+        // merge geoJSON with map if available
+        await generatemap(config, map_output, layers_file, jsonFilePath, version);
     } else {
         console.error(`File not found: ${filePath}`);
     }
@@ -430,6 +638,12 @@ for(const arg of args){
     }
     if ( arg.startsWith('xlsx_output=')) {
         xlsxFilePath = arg.split('=')[1];
+    }
+    if ( arg.startsWith('layers=')){
+        layers_file = arg.split('=')[1];
+    }
+    if ( arg.startsWith('map_output=')){
+        map_output = arg.split('=')[1];
     }
 }
 run().then(() => {

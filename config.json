@@ -109,5 +109,18 @@
         "total-floor-area":{
             "stats":["count","mean","variance","standard-deviation","min","max"]
         }
-    }
+    },
+    "maps":{
+        "parish_EPC":{
+            "geography":"TeignbridgeParishes",
+            "key":"CODE",
+            "geography_attributes":["CODE","NAME"]
+        },
+        "ward_EPC":{
+            "geography":"TeignbridgeWards",
+            "key":"CODE",
+            "geography_attributes":["CODE","NAME"]
+        }
+    },
+    "version":1
 }
