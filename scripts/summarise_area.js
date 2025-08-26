@@ -571,14 +571,31 @@ async function run(){
         let versionfile = path.join(path.dirname(jsonFilePath),'version.json');
         let version = await getsummary_version(versionfile);
         let changed = false;
+        // Check csv source version
         if ( version.csv_updated != csv_version.updatedDate  ){
             console.log('csv versions differ version.csv_updated: ' + version.csv_updated + ' csv_version.csv_updated: ' + csv_version.updatedDate);
             changed = true;
         }
+        // Check config version
         if ( version.config_version !== config.version ){
             console.log('Config versions differ version.config_verion: ' + version.config_version + ' config.version: ' + config.version);
             changed = true;
         }
+        // Check that output files exist
+        await fs.promises.access(xlsxFilePath,fs.constants.R_OK).catch(err => {
+            if ( err.code === 'ENOENT'){
+                changed = true;
+                return;
+            }
+            throw err;
+        });
+        await fs.promises.access(jsonFilePath,fs.constants.R_OK).catch(err => {
+            if ( err.code === 'ENOENT'){
+                changed = true;
+                return;
+            }
+            throw err;
+        });
         if ( changed ) {
             console.log("csv data updated or config change - updating summaries");
             let areaData = await process_csv(filePath);
