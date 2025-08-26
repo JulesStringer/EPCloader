@@ -12,9 +12,24 @@ LAYERS='/mnt/www/stringerhj.co.uk/mapdata/layers.json'
 JSON_OUTPUT="${SUMMARY_DIR}/summary_by_parish.json"
 XLSX_OUTPUT="${SUMMARY_DIR}/summary_by_parish.xlsx"
 MAP_OUTPUT="parish_EPC"
-node ./scripts/summarise_area.js datadir="${DATADIR}" code_name='PARISH_CODE' uprn_lookup="${UPRN_LOOKUP}" json_output="${JSON_OUTPUT}" xlsx_output="${XLSX_OUTPUT}" layers="${LAYERS}" map_output="${MAP_OUTPUT}"
+node ./scripts/summarise_area.js datadir="${DATADIR}" code_name='PAR' uprn_lookup="${UPRN_LOOKUP}" json_output="${JSON_OUTPUT}" xlsx_output="${XLSX_OUTPUT}" layers="${LAYERS}" map_output="${MAP_OUTPUT}"
 # summary epcs by ward
 JSON_OUTPUT="${SUMMARY_DIR}/summary_by_ward.json"
 XLSX_OUTPUT="${SUMMARY_DIR}/summary_by_ward.xlsx"
 MAP_OUTPUT="ward_EPC"
-node ./scripts/summarise_area.js datadir="${DATADIR}" code_name='WARD_CODE' uprn_lookup="${UPRN_LOOKUP}" json_output="${JSON_OUTPUT}" xlsx_output="${XLSX_OUTPUT}" layers="${LAYERS}" map_output="${MAP_OUTPUT}"
+node ./scripts/summarise_area.js datadir="${DATADIR}" code_name='WD' uprn_lookup="${UPRN_LOOKUP}" json_output="${JSON_OUTPUT}" xlsx_output="${XLSX_OUTPUT}" layers="${LAYERS}" map_output="${MAP_OUTPUT}"
+# summary epcs by OA21
+JSON_OUTPUT="${SUMMARY_DIR}/summary_by_oa21.json"
+XLSX_OUTPUT="${SUMMARY_DIR}/summary_by_oa21.xlsx"
+MAP_OUTPUT="oa21_EPC"
+node ./scripts/summarise_area.js datadir="${DATADIR}" code_name='OA21' uprn_lookup="${UPRN_LOOKUP}" json_output="${JSON_OUTPUT}" xlsx_output="${XLSX_OUTPUT}" layers="${LAYERS}" map_output="${MAP_OUTPUT}"
+# summary epcs by LSOA21
+JSON_OUTPUT="${SUMMARY_DIR}/summary_by_lsoa21.json"
+XLSX_OUTPUT="${SUMMARY_DIR}/summary_by_lsoa21.xlsx"
+MAP_OUTPUT="lsoa21_EPC"
+node ./scripts/summarise_area.js datadir="${DATADIR}" code_name='LSOA21' uprn_lookup="${UPRN_LOOKUP}" json_output="${JSON_OUTPUT}" xlsx_output="${XLSX_OUTPUT}" layers="${LAYERS}" map_output="${MAP_OUTPUT}"
+# summary epcs by MSOA21
+JSON_OUTPUT="${SUMMARY_DIR}/summary_by_msoa21.json"
+XLSX_OUTPUT="${SUMMARY_DIR}/summary_by_msoa21.xlsx"
+MAP_OUTPUT="msoa21_EPC"
+node ./scripts/summarise_area.js datadir="${DATADIR}" code_name='MSOA21' uprn_lookup="${UPRN_LOOKUP}" json_output="${JSON_OUTPUT}" xlsx_output="${XLSX_OUTPUT}" layers="${LAYERS}" map_output="${MAP_OUTPUT}"

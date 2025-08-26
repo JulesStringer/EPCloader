@@ -104,6 +104,8 @@ If this layer doesn't exist in the layers file an entry for it is added.
 + version data added to summaries
 + versions file updated for output map layers
 + summary and map only updated if a component has been updated, for summary this is csv or config version, for map this is summary version components or geography version.
+26/8/2025
++ update.sh updated to use new UPRN lookup from ONS including OA21, LSOA21 and MSOA21 as well as Ward and Parish.
 ## Outstanding issues
 + Handle attribute ranges on continuous variables
 + Display as themed maps - how to select area type, attribute and ranges.
