@@ -114,28 +114,38 @@
         "parish_EPC":{
             "geography":"TeignbridgeParishes",
             "key":"CODE",
-            "geography_attributes":["CODE","NAME"]
+            "geography_attributes":{
+                "code":"CODE",
+                "name":"name"}
         },
         "ward_EPC":{
             "geography":"TeignbridgeWards",
             "key":"CODE",
-            "geography_attributes":["CODE","NAME"]
+            "geography_attributes":{
+                "code":"CODE",
+                "name":"name"}
         },
         "msoa21_EPC":{
             "geography":"msoa",
             "key":"MSOA21CD",
-            "geography_attributes":["MSOA21CD, MSOA21NM"]
+            "geography_attributes":{
+                "code":"MSOA21CD",
+                "name":"MSOA21NM"}
         },
         "lsoa21_EPC":{
             "geography":"lsoa",
             "key":"LSOA21CD",
-            "geography_attributes":["LSOA21CD, LSOA21NM"]
+            "geography_attributes":{
+                "code":"LSOA21CD",
+                "name":"LSOA21NM"}
         },
         "oa21_EPC":{
             "geography":"oa",
             "key":"OA21CD",
-            "geography_attributes":["OS21CD, LSOA21NM"]
+            "geography_attributes":{
+                "code":"OA21CD",
+                "name":"LSOA21NM"}
         }
     },
-    "version":1
+    "version":2
 }

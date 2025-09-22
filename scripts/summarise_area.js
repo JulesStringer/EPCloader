@@ -475,8 +475,9 @@ async function generatemap(config, map_output, layers_file, jsonFilePath, versio
                     let key = feature.properties[map.key];
                     if ( jsonOutput[key]){
                         let properties = {};
-                        for(let att of map.geography_attributes){
-                            properties[att] = feature.properties[att];
+                        for(let att in map.geography_attributes){
+                            let attval = map.geography_attributes[att];
+                            properties[att] = feature.properties[attval];
                         }
                         let epcdata = jsonOutput[key];
                         for(let att in epcdata){
