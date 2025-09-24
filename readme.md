@@ -109,7 +109,7 @@ If this layer doesn't exist in the layers file an entry for it is added.
 24/9/2025
 + error_handler used to send error email on failure
 + update.sh changed to use PARISH attribute rather than PAR in uprn lookup to reflect the parish from geocoding using current TeignbridgeParishes.json rather than latest parish code from ONS which is currently different for Newton Abbot and Ogwell.
++ Check that there are no more than 11% of EPCs that have a UPRN but the UPRN doesn't match any of the target areas (currently 10.02%)
 ## Outstanding issues
 + Handle attribute ranges on continuous variables
-+ Display as themed maps - how to select area type, attribute and ranges.
-+ Configure maplayer generation for ONS census areas as data becomes available.
++ Fall back to postcode lookup if UPRN doesn't exist or match

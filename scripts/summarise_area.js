@@ -27,6 +27,7 @@ let uprn_lookup = {};
 // These objects will be used to store data for our summary.
 let recordCount = 0;
 let no_uprn_count = 0;
+let no_match_uprn_count = 0;
 let uniqueAreaCodes = 0;
 let allMap;
 const uniqueBuilding = new Set();
@@ -241,11 +242,24 @@ async function process_csv(filePath) {
                     // If the UPRN does not exist in our lookup, we can log it or handle it as needed.
                     //console.warn(`UPRN ${uprn} not found in lookup.`);
                     no_uprn_count++;
+                    no_match_uprn_count++;
                 }
             }
         })
         // Listen for the 'end' event. This fires once the entire file has been processed.
         .on('end', () => {
+            let r = {
+                recordcount: recordCount,
+                no_uprn_count: no_uprn_count,
+                uprn_mismatch_percent: 100 * no_match_uprn_count / recordCount,
+                code_name: code_name,
+                uniqueAreaCodes: uniqueAreaCodes,
+                no_match_uprn_count: no_match_uprn_count
+            };
+            console.log('uprn mismatch %: ' + r.uprn_mismatch_percent);
+            if ( r.uprn_mismatch_percent > 11 ){
+                reject( new error_handler.MaploadError(code_name + ' too many mismatches ',r));
+            }
             resolve(areaData);
         })    // Listen for the 'error' event to catch any issues during file reading.
         .on('error', (err) => {
@@ -609,6 +623,7 @@ async function run(){
             console.log(`Total records processed: ${recordCount}`);
             console.log(`Total unique Buildings EPCs: ${uniqueBuilding.size}`);
             console.log(`Total records with no UPRN: ${no_uprn_count}`);
+            console.log(`Total EPCs with UPRN but no UPRN match: ${no_match_uprn_count}`);
             // Generate and write the output files
             let jsonOutput = await generateJsonOutput(newAreaData);
             const allAttributesToSummarize = [...config.attributes /*, ...config.recommendations, ...config.features*/];
@@ -637,6 +652,7 @@ for(const arg of args){
     }
     if ( arg.startsWith('code_name=')) {
         code_name = arg.split('=')[1];
+        console.log('Processing ' + code_name);
     }
     if ( arg.startsWith('config=')) {
         configPath = arg.split('=')[1];
