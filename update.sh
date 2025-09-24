@@ -12,7 +12,7 @@ LAYERS='/mnt/www/stringerhj.co.uk/mapdata/layers.json'
 JSON_OUTPUT="${SUMMARY_DIR}/summary_by_parish.json"
 XLSX_OUTPUT="${SUMMARY_DIR}/summary_by_parish.xlsx"
 MAP_OUTPUT="parish_EPC"
-node ./scripts/summarise_area.js datadir="${DATADIR}" code_name='PAR' uprn_lookup="${UPRN_LOOKUP}" json_output="${JSON_OUTPUT}" xlsx_output="${XLSX_OUTPUT}" layers="${LAYERS}" map_output="${MAP_OUTPUT}"
+node ./scripts/summarise_area.js datadir="${DATADIR}" code_name='PARISH' uprn_lookup="${UPRN_LOOKUP}" json_output="${JSON_OUTPUT}" xlsx_output="${XLSX_OUTPUT}" layers="${LAYERS}" map_output="${MAP_OUTPUT}"
 # summary epcs by ward
 JSON_OUTPUT="${SUMMARY_DIR}/summary_by_ward.json"
 XLSX_OUTPUT="${SUMMARY_DIR}/summary_by_ward.xlsx"

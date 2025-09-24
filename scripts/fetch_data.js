@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const error_handler = require('../../error_handler/error_handler.js');
 // Load environment variables from .env file
 require('dotenv').config({quiet: true}); // This will find the .env file in the root
 // A .env file is used to store the token supplied by the Open Data Communities API
@@ -114,5 +115,6 @@ console.log('Query : ' + JSON.stringify(query));
 run(query).then(() => {
     console.log('Data fetch complete.');
 }).catch(err => {
+    error_handler.send_error_email(err, "EPC Fetch");
     console.error('Error fetching data:', err);
 });

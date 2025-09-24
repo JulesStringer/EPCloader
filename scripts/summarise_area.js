@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
 const ExcelJS = require('exceljs');
+const error_handler = require('../../error_handler/error_handler.js');
 // Load and parse epc_data.csv
 // Get UPRN lookup
 // Look up each building's UPRN in the lookup and classify it by
@@ -656,6 +657,7 @@ for(const arg of args){
 run().then(() => {
     console.log('Summary complete.');
 }).catch(err => {
+    error_handler.send_error_email(err, "EPC Loader summarise_area error");
     console.error('Error summarising area:', err);
 });
 // Ability to put aa spreadsheet on a map - as a plug-in

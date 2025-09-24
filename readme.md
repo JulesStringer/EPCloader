@@ -106,6 +106,9 @@ If this layer doesn't exist in the layers file an entry for it is added.
 + summary and map only updated if a component has been updated, for summary this is csv or config version, for map this is summary version components or geography version.
 26/8/2025
 + update.sh updated to use new UPRN lookup from ONS including OA21, LSOA21 and MSOA21 as well as Ward and Parish.
+24/9/2025
++ error_handler used to send error email on failure
++ update.sh changed to use PARISH attribute rather than PAR in uprn lookup to reflect the parish from geocoding using current TeignbridgeParishes.json rather than latest parish code from ONS which is currently different for Newton Abbot and Ogwell.
 ## Outstanding issues
 + Handle attribute ranges on continuous variables
 + Display as themed maps - how to select area type, attribute and ranges.
