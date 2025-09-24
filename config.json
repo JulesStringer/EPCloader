@@ -116,14 +116,14 @@
             "key":"CODE",
             "geography_attributes":{
                 "code":"CODE",
-                "name":"name"}
+                "name":"NAME"}
         },
         "ward_EPC":{
             "geography":"TeignbridgeWards",
             "key":"CODE",
             "geography_attributes":{
                 "code":"CODE",
-                "name":"name"}
+                "name":"NAME"}
         },
         "msoa21_EPC":{
             "geography":"msoa",

@@ -464,6 +464,18 @@ async function generatemap(config, map_output, layers_file, jsonFilePath, versio
                 changed = true;
                 console.log('Config changed');
             }
+            if ( out_version.uprn_lookup_updated !== version.uprn_lookup_updated){
+                changed = true;
+                console.log('Uprn lookup changed');
+            }
+            await fs.promises.access(out_file).catch(async(err) => {
+                if ( err.code == 'ENOENT'){
+                    changed = true;
+                    return;
+                } else {
+                    throw err;
+                }
+            });
             if ( !changed ){
                 console.log('Map unchanged');
             }
@@ -542,7 +554,8 @@ async function generatemap(config, map_output, layers_file, jsonFilePath, versio
                     loaded: d.toISOString(),
                     csv_updated: version.csv_updated,
                     config_version:version.config_version,
-                    geography: geo_version.version
+                    geography: geo_version.version,
+                    uprn_lookup_updated: version.uprn_lookup_updated
                 };
                 await update_versions(out_file, result_version);
             }
@@ -570,6 +583,13 @@ async function getsummary_version(versionfile){
     });
     return JSON.parse(versiondata);
 }
+function get_uprn_lookup_updated(){
+    const stats = fs.statSync(uprn_lookup_file);
+    const uptime = stats.mtime.getTime();
+    //console.log(`File last modified at: ${uptime}`);
+
+    return uptime;
+}
 async function run(){
     await load_config();
     await load_uprn_lookup();
@@ -590,6 +610,11 @@ async function run(){
         // Check csv source version
         if ( version.csv_updated != csv_version.updatedDate  ){
             console.log('csv versions differ version.csv_updated: ' + version.csv_updated + ' csv_version.csv_updated: ' + csv_version.updatedDate);
+            changed = true;
+        }
+        let uprn_lookup_updated = get_uprn_lookup_updated();
+        if ( version.uprn_lookup_updated != uprn_lookup_updated ){
+            console.log('uprn_lookup versions differ ' + version.uprn_lookup_updated + ' uprn_lookup_updated: ' + uprn_lookup_updated);
             changed = true;
         }
         // Check config version
@@ -631,7 +656,8 @@ async function run(){
             // write summary version
             version = {
                 csv_updated: csv_version.updatedDate,
-                config_version: config.version
+                config_version: config.version,
+                uprn_lookup_updated: uprn_lookup_updated
             };
             await fs.promises.writeFile(versionfile, JSON.stringify(version));
         }
